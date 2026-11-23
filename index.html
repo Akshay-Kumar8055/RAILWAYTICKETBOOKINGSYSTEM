@@ -1,0 +1,222 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+
+class Train {
+    int trainNumber;
+    String trainName;
+    List<String> routeStations;
+    String startTime;
+    int totalSeats;
+    int availableSeats;
+
+    Train(int trainNumber, String trainName, List<String> routeStations,
+          String startTime, int totalSeats) {
+        this.trainNumber = trainNumber;
+        this.trainName = trainName;
+        this.routeStations = new ArrayList<>();
+        for (String station : routeStations) {
+            this.routeStations.add(station.trim().toUpperCase());
+        }
+        this.startTime = startTime;
+        this.totalSeats = totalSeats;
+        this.availableSeats = totalSeats;
+    }
+
+    boolean servesDirectRoute(String from, String to) {
+        int fromIndex = routeStations.indexOf(from.toUpperCase());
+        int toIndex = routeStations.indexOf(to.toUpperCase());
+        return fromIndex != -1 && toIndex != -1 && fromIndex < toIndex;
+    }
+
+    String getRouteSummary() {
+        return String.join(" -> ", routeStations);
+    }
+}
+
+class Ticket {
+    String pnr;
+    int trainNumber;
+    String trainName;
+    String fromStation;
+    String toStation;
+    String passengerName;
+    int age;
+    String gender;
+
+    Ticket(String pnr, int trainNumber, String trainName, String fromStation, String toStation,
+           String passengerName, int age, String gender) {
+        this.pnr = pnr;
+        this.trainNumber = trainNumber;
+        this.trainName = trainName;
+        this.fromStation = fromStation;
+        this.toStation = toStation;
+        this.passengerName = passengerName;
+        this.age = age;
+        this.gender = gender;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+        List<Train> trains = new ArrayList<>();
+        List<Ticket> bookedTickets = new ArrayList<>();
+        Random random = new Random();
+        Scanner scanner = new Scanner(System.in);
+
+        trains.add(new Train(
+                11302, "Udyan Express",
+                Arrays.asList("MUMBAI", "PUNE", "SOLAPUR", "KALABURAGI", "WADI", "RAICHUR", "BENGALURU"),
+                "08:05", 10
+        ));
+        trains.add(new Train(
+                12779, "Goa Express",
+                Arrays.asList("DELHI", "PUNE", "SOLAPUR", "KALABURAGI", "WADI", "HUBBALLI", "VASCO"),
+                "15:00", 8
+        ));
+        trains.add(new Train(
+                12015, "Deccan Shatabdi",
+                Arrays.asList("DELHI", "AGRA", "GWALIOR", "JHANSI", "BHOPAL", "JAIPUR"),
+                "06:05", 12
+        ));
+        trains.add(new Train(
+                12657, "Southern Mail",
+                Arrays.asList("BENGALURU", "HOSUR", "SALEM", "ERODE", "COIMBATORE", "CHENNAI"),
+                "06:15", 10
+        ));
+
+        int choice;
+        do {
+            System.out.println("\n================ DIRECT TRAIN BOOKING ================");
+            System.out.println("1. Search Direct Trains (From -> To) & Book");
+            System.out.println("2. View All Train Routes");
+            System.out.println("3. View Booked Tickets");
+            System.out.println("4. Exit");
+            System.out.print("Enter choice (1-4): ");
+
+            while (!scanner.hasNextInt()) {
+                System.out.print("Enter a valid number (1-4): ");
+                scanner.next();
+            }
+            choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("\nFrom Station: ");
+                    String from = scanner.nextLine().trim().toUpperCase();
+
+                    System.out.print("To Station: ");
+                    String to = scanner.nextLine().trim().toUpperCase();
+
+                    List<Train> directTrains = new ArrayList<>();
+                    for (Train t : trains) {
+                        if (t.servesDirectRoute(from, to)) {
+                            directTrains.add(t);
+                        }
+                    }
+
+                    if (directTrains.isEmpty()) {
+                        System.out.println("\nNo direct train found from " + from + " to " + to + ".");
+                        System.out.println("Tip: Choose option 2 to see all station routes.");
+                        break;
+                    }
+
+                    System.out.println("\n--- Direct Trains (" + from + " -> " + to + ") ---");
+                    for (Train t : directTrains) {
+                        System.out.println("Train No: " + t.trainNumber +
+                                " | Name: " + t.trainName +
+                                " | Departs Origin: " + t.startTime +
+                                " | Seats Left: " + t.availableSeats + "/" + t.totalSeats);
+                        System.out.println("   Route: " + t.getRouteSummary());
+                    }
+
+                    System.out.print("\nEnter Train Number to book: ");
+                    while (!scanner.hasNextInt()) {
+                        System.out.print("Enter a valid Train Number: ");
+                        scanner.next();
+                    }
+                    int selectedTrainNo = scanner.nextInt();
+                    scanner.nextLine();
+
+                    Train selectedTrain = null;
+                    for (Train t : directTrains) {
+                        if (t.trainNumber == selectedTrainNo) {
+                            selectedTrain = t;
+                            break;
+                        }
+                    }
+
+                    if (selectedTrain == null) {
+                        System.out.println("Train number is not available for " + from + " -> " + to + ".");
+                        break;
+                    }
+
+                    if (selectedTrain.availableSeats <= 0) {
+                        System.out.println("Sorry, no seats available on this train.");
+                        break;
+                    }
+
+                    System.out.print("Passenger Name: ");
+                    String name = scanner.nextLine().trim();
+
+                    System.out.print("Age: ");
+                    while (!scanner.hasNextInt()) {
+                        System.out.print("Enter a valid age: ");
+                        scanner.next();
+                    }
+                    int age = scanner.nextInt();
+                    scanner.nextLine();
+
+                    System.out.print("Gender (M/F/O): ");
+                    String gender = scanner.nextLine().trim().toUpperCase();
+
+                    selectedTrain.availableSeats--;
+                    String pnr = "PNR" + (100000 + random.nextInt(900000));
+                    Ticket ticket = new Ticket(pnr, selectedTrain.trainNumber, selectedTrain.trainName,
+                            from, to, name, age, gender);
+                    bookedTickets.add(ticket);
+
+                    System.out.println("\nTicket Booked Successfully!");
+                    System.out.println("PNR       : " + ticket.pnr);
+                    System.out.println("Train     : " + ticket.trainName + " (" + ticket.trainNumber + ")");
+                    System.out.println("Journey   : " + ticket.fromStation + " -> " + ticket.toStation);
+                    System.out.println("Passenger : " + ticket.passengerName + " (" + ticket.age + "/" + ticket.gender + ")");
+                    System.out.println("Status    : CONFIRMED");
+                    break;
+
+                case 2:
+                    System.out.println("\n--- All Train Routes ---");
+                    for (Train t : trains) {
+                        System.out.println(t.trainNumber + " - " + t.trainName + ": " + t.getRouteSummary());
+                    }
+                    break;
+
+                case 3:
+                    System.out.println("\n--- Booked Tickets ---");
+                    if (bookedTickets.isEmpty()) {
+                        System.out.println("No tickets booked yet.");
+                    } else {
+                        for (Ticket tk : bookedTickets) {
+                            System.out.println(tk.pnr + " | " + tk.trainName + " (" + tk.trainNumber + ") | " +
+                                    tk.fromStation + " -> " + tk.toStation + " | " + tk.passengerName + " | CONFIRMED");
+                        }
+                    }
+                    break;
+
+                case 4:
+                    System.out.println("Exiting application.");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Enter 1 to 4.");
+            }
+
+        } while (choice != 4);
+
+        scanner.close();
+    }
+}
